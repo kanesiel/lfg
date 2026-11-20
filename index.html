@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+     <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>Сердце из двоичного кода</title>
+        <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+    }
+
+    #heart-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      filter: drop-shadow(0 0 25px rgba(243, 148, 195, 0.7));
+      animation: heartbeat 1.2s ease-in-out infinite;
+      animation-play-state: paused;
+      z-index: 2;
+    }
+
+    #heart-container.beating {
+      animation-play-state: running;
+    }
+
+    @keyframes heartbeat {
+      0%   { transform: translate(-50%, -50%) scale(1); }
+      15%  { transform: translate(-50%, -50%) scale(1.18); }
+      30%  { transform: translate(-50%, -50%) scale(0.95); }
+      45%  { transform: translate(-50%, -50%) scale(1.12); }
+      60%  { transform: translate(-50%, -50%) scale(1); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    #heart-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    #message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #690f1d;
+      font-size: 2.2rem;
+      text-align: center;
+      text-shadow: 0 0 15px rgba(255, 105, 180, 0.9),
+                   0 0 40px rgba(238, 35, 143, 0.5);
+      opacity: 0;
+      transition: opacity 1.5s ease;
+      z-index: 3;
+      letter-spacing: 3px;
+      padding: 0 20px;
+    }
+
+    #message.show {
+      opacity: 1;
+    }
+
+    #smoke-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      background: radial-gradient(circle at 50% 0%, #1a1a1a 0%, #000 70%);
+      opacity: 0;
+      transform: translateY(-100%);
+      transition: transform 2s cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 2s ease;
+    }
+
+    #smoke-overlay.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #final-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #f0ccea;
+      font-size: 9rem;
+      text-align: center;
+      text-shadow: 0 0 20px rgba(255, 105, 180, 0.8),
+                   0 0 60px rgba(255, 20, 147, 0.4);
+      opacity: 0;
+      transition: opacity 2s ease 0.5s;
+      z-index: 11;
+      letter-spacing: 4px;
+      padding: 0 20px;
+      line-height: 1.5;
+    }
+
+    #final-text.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="heart-container">
+    <canvas id="heart-canvas" width="600" height="600"></canvas>
+  </div>
+
+  <div id="message">КУ БЛЯ</div>
+
+  <div id="smoke-overlay"></div>
+
+  <div id="final-text">ИДИ<br>НАХУЙ</div>
+
+  <script>
+    // ===== 1. Рисуем сердце из двоичного кода на canvas =====
+    const canvas = document.getElementById('heart-canvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // Параметрическое уравнение сердца
+    function heartPoint(t) {
+      // Классическое уравнение сердца
+      const x = 16 * Math.pow(Math.sin(t), 3);
+      const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t)
+                - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+      // Масштабируем и центрируем
+      const scale = 14;
+      return {
+        x: W / 2 + x * scale,
+        y: H / 2 - y * scale
+      };
+    }
+
+    // Собираем точки по контуру сердца
+    const points = [];
+    const steps = 600;
+    for (let i = 0; i < steps; i++) {
+      const t = (i / steps) * Math.PI * 2;
+      points.push(heartPoint(t));
+    }
+
+    // Рисуем точки в виде цифр 0 и 1
+    function drawBinaryHeart() {
+      ctx.clearRect(0, 0, W, H);
+      // Свечение
+      ctx.shadowColor = '#ff69b4';
+      ctx.shadowBlur = 12;
+
+      // Внешний контур — крупные цифры
+      ctx.font = 'bold 14px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#ff69b4';
+
+      points.forEach((p, i) => {
+        const char = i % 2 === 0 ? '1' : '0';
+        ctx.fillText(char, p.x, p.y);
+      });
+
+      // Внутренние слои — уменьшенные копии для плотности
+      const layers = [
+        { scale: 0.75, font: '11px', color: '#ff85c8', blur: 8 },
+        { scale: 0.5,  font: '9px',  color: '#ffa0d5', blur: 6 },
+        { scale: 0.28, font: '7px',  color: '#ffb6c1', blur: 4 }
+      ];
+
+      layers.forEach(layer => {
+        ctx.shadowBlur = layer.blur;
+        ctx.font = `bold ${layer.font} "Courier New", monospace`;
+        ctx.fillStyle = layer.color;
+
+        points.forEach((p, i) => {
+          const cx = W / 2 + (p.x - W / 2) * layer.scale;
+          const cy = H / 2 + (p.y - H / 2) * layer.scale;
+          const char = (i + Math.floor(layer.scale * 10)) % 2 === 0 ? '1' : '0';
+          ctx.fillText(char, cx, cy);
+        });
+      });
+
+      // Сбрасываем свечение
+      ctx.shadowBlur = 0;
+    }
+
+    drawBinaryHeart();
+
+    // ===== 2. Анимация появления и биения =====
+    const heartContainer = document.getElementById('heart-container');
+    const messageEl = document.getElementById('message');
+    const smoke = document.getElementById('smoke-overlay');
+    const finalText = document.getElementById('final-text');
+
+    // Небольшая пауза перед стартом
+    setTimeout(() => {
+      // Сердце начинает биться
+      heartContainer.classList.add('beating');
+    }, 800);
+
+    // Через 2.5 секунды после старта — показываем текст
+    setTimeout(() => {
+      messageEl.classList.add('show');
+    }, 2800);
+
+    // Через 5.5 секунд — черная дымка накрывает экран
+    setTimeout(() => {
+      smoke.classList.add('active');
+    }, 5500);
+
+    // Через 7.5 секунд — финальный текст
+    setTimeout(() => {
+      finalText.classList.add('show');
+    }, 7500);
+
+    // ===== 3. Перерисовка при ресайзе (на всякий случай) =====
+    window.addEventListener('resize', () => {
+      // Canvas фиксированного размера, ничего не делаем,
+      // но можно добавить адаптив при желании
+    });
+  </script>
+</body>
+</html>
